@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import render, redirect 
+from django.contrib.auth.decorators import login_required
 import pandas as pd
 
 from sklearn.feature_extraction.text import CountVectorizer
@@ -7,10 +9,25 @@ from sklearn.naive_bayes import MultinomialNB
 
 from .forms import MessageForm
 
-dataset = pd.read_csv("emails.csv")
+
+# -------- REGISTER VIEW --------
+def register(request):
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'register.html', {'form': form})
+
 
 # ---- Load dataset ----
-
+dataset = pd.read_csv("emails.csv")
 
 # ---- Vectorize ----
 vectorizer = CountVectorizer()
@@ -32,6 +49,7 @@ def predictMessage(message):
     prediction = model.predict(messageVector)
     return 'Spam' if prediction[0] == 1 else 'Ham'
 
+@login_required
 
 def Home(request):
     result = None
